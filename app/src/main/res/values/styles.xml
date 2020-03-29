@@ -1,11 +1,18 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <!--重写Alertdialog样式，去除背景-->
+    <style name="CustomProgress" parent="Theme.AppCompat.Dialog">
+        <!--悬浮窗背景是否变暗-->
+        <item name="android:backgroundDimEnabled">false</item>
+        <!--背景颜色-->
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
 </resources>
