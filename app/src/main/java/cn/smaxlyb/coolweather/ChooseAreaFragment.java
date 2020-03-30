@@ -1,6 +1,7 @@
 package cn.smaxlyb.coolweather;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.CellIdentityTdscdma;
 import android.view.LayoutInflater;
@@ -20,6 +21,7 @@ import org.litepal.LitePal;
 import org.litepal.tablemanager.typechange.BooleanOrm;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,7 +68,7 @@ public class ChooseAreaFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         areaBinding = ChooseAreaBinding.inflate(inflater, container, false);
-        //创建省级列表，默认没有任何数据，需要查询
+        //创建列表，默认没有任何数据，需要查询
         adapter = new ArrayAdapter(getContext(), android.R.layout.simple_list_item_checked, dataList);
         areaBinding.listView.setAdapter(adapter);
         areaBinding.listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
@@ -89,6 +91,12 @@ public class ChooseAreaFragment extends Fragment {
             } else if (currentLevel == LEVEL_CITY) {
                 selectedCity = cityList.get(position);
                 queryCounties();
+            } else if (currentLevel == LEVEL_COUNTY) {
+                String weatherId = countyList.get(position).getWeatherId();
+                Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                intent.putExtra("weather_id", weatherId);
+                startActivity(intent);
+                getActivity().finish();
             }
         });
         // 按钮单击事件
@@ -98,6 +106,7 @@ public class ChooseAreaFragment extends Fragment {
                 queryCities();
             } else if (currentLevel == LEVEL_CITY) {
                 queryProvinces();
+
             }
         });
     }
@@ -119,7 +128,7 @@ public class ChooseAreaFragment extends Fragment {
             }
             // 通知adapter数据发生改变
             adapter.notifyDataSetChanged();
-            // FIXME 默认选中 取其他值会怎么样？
+            areaBinding.listView.setSelection(0);
             currentLevel = LEVEL_PROVINCE;
         } else {
             // 如果没有数据，网络查询
@@ -128,6 +137,7 @@ public class ChooseAreaFragment extends Fragment {
         }
     }
 
+    //查询市级数据
     private void queryCities() {
         cityList = LitePal.where("provinceid = ?", String.valueOf(selectedProvince.getId())).find(City.class);
         // 当本地有数据时，清除现有列表
@@ -139,6 +149,7 @@ public class ChooseAreaFragment extends Fragment {
                 dataList.add(city.getCityName());
             }
             adapter.notifyDataSetChanged();
+            areaBinding.listView.setSelection(0);
             currentLevel = LEVEL_CITY;
         } else {
             String address = "http://guolin.tech/api/china/" + selectedProvince.getProvinceCode();
@@ -146,6 +157,7 @@ public class ChooseAreaFragment extends Fragment {
         }
     }
 
+    //查询县级数据
     private void queryCounties() {
         countyList = LitePal.where("cityid = ? ", String.valueOf(selectedCity.getId())).find(County.class);
         if (countyList.size() > 0) {
@@ -155,6 +167,7 @@ public class ChooseAreaFragment extends Fragment {
                 dataList.add(county.getCountyName());
             }
             adapter.notifyDataSetChanged();
+            areaBinding.listView.setSelection(0);
             currentLevel = LEVEL_COUNTY;
         } else {
             String address = "http://guolin.tech/api/china/" + selectedProvince.getProvinceCode() + "/" + selectedCity.getCityCode();
@@ -210,11 +223,10 @@ public class ChooseAreaFragment extends Fragment {
             // 请求失败
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                LogUtil.d("ChooseAreaFragment", "请求失败");
+                LogUtil.e("ChooseAreaFragment", "请求失败，异常原因：" + e.toString());
                 // 回到主线程，取消进度框，显示警告框
                 getActivity().runOnUiThread(() -> {
                     DialogUtil.dismissDialog();
-                    Toast.makeText(getActivity(), "加载失败", Toast.LENGTH_SHORT).show();
                     AlertDialog dialog = new AlertDialog.Builder(getActivity())
                             .setTitle("加载失败")
                             .setMessage("请检查你的网络是否通畅！")
