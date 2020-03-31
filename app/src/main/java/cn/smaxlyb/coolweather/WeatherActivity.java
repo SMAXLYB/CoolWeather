@@ -3,6 +3,7 @@ package cn.smaxlyb.coolweather;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import cn.smaxlyb.coolweather.databinding.ActivityWeatherBinding;
 import cn.smaxlyb.coolweather.gson.Forecast;
 import cn.smaxlyb.coolweather.gson.Weather;
+import cn.smaxlyb.coolweather.service.AutoUpdateService;
 import cn.smaxlyb.coolweather.util.HttpUtil;
 import cn.smaxlyb.coolweather.util.LogUtil;
 import cn.smaxlyb.coolweather.util.Utility;
@@ -168,6 +170,9 @@ public class WeatherActivity extends AppCompatActivity {
 
         weatherBinding.weatherLayout.setVisibility(View.VISIBLE);
         weatherBinding.loadFailed.setVisibility(View.INVISIBLE);
+
+        Intent intent = new Intent(this, AutoUpdateService.class);
+        startService(intent);
     }
 
     private void loadBingPic() {
