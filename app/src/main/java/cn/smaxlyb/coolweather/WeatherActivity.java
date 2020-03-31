@@ -1,11 +1,13 @@
 package cn.smaxlyb.coolweather;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
 
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -28,8 +30,9 @@ import okhttp3.Callback;
 import okhttp3.Response;
 
 public class WeatherActivity extends AppCompatActivity {
-    private ActivityWeatherBinding weatherBinding;
+    public ActivityWeatherBinding weatherBinding;
     private SharedPreferences prefs;
+    public String weatherId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,36 +42,54 @@ public class WeatherActivity extends AppCompatActivity {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
-
         setContentView(weatherBinding.getRoot());
-        // 查询本地是否有天气数据
+
         prefs = this.getSharedPreferences("weatherData", MODE_PRIVATE);
+        // 查询本地是否有天气数据
         String weatherString = prefs.getString("weather", null);
+        if (weatherString != null) {
+            // 有缓存数据，直接展示结果
+            Weather weather = Utility.handleWeatherResponse(weatherString);
+            weatherId = weather.basic.weatherId;
+            showWeatherInfo(weather);
+        } else {
+            // 无缓存数据，把当前页面设为不可见
+            weatherBinding.weatherLayout.setVisibility(View.INVISIBLE);
+            weatherId = getIntent().getStringExtra("weather_id");
+            requestWeather(weatherId);
+        }
+
+        // 加载背景图片
         String bingPic = prefs.getString("bing_pic", null);
         if (bingPic != null) {
             Glide.with(this).load(bingPic).into(weatherBinding.bingPicImg);
         } else {
             loadBingPic();
         }
-        if (weatherString != null) {
-            // 有缓存数据，直接展示结果
-            Weather weather = Utility.handleWeatherResponse(weatherString);
-            showWeatherInfo(weather);
-        } else {
-            // 无缓存数据，把当前页面设为不可见
-            weatherBinding.weatherLayout.setVisibility(View.INVISIBLE);
-            String weatherId = getIntent().getStringExtra("weather_id");
+
+        // 设置下拉监听
+        weatherBinding.swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
+        weatherBinding.swipeRefresh.setOnRefreshListener(() -> {
             requestWeather(weatherId);
-        }
+            loadBingPic();
+        });
+
+        // 设置切换位置监听
+        weatherBinding.title.navButton.setOnClickListener((view) -> {
+            weatherBinding.drawerLayout.openDrawer(Gravity.LEFT);
+        });
     }
 
     public void requestWeather(final String weatherId) {
         String weatherUrl = "http://guolin.tech/api/weather?cityid=" + weatherId + "&key=1";
+        LogUtil.w("WeatherActivity", "请求地址：" + weatherUrl);
         HttpUtil.sendRequestWithOkHttp(weatherUrl, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 LogUtil.e("WeatherActivity", "请求失败，错误原因：" + e.toString());
                 runOnUiThread(() -> {
+                    weatherBinding.loadFailed.setVisibility(View.VISIBLE);
+                    weatherBinding.swipeRefresh.setRefreshing(false);
                     Toast.makeText(WeatherActivity.this, "获取天气信息失败", Toast.LENGTH_SHORT).show();
                 });
             }
@@ -89,8 +110,10 @@ public class WeatherActivity extends AppCompatActivity {
                         showWeatherInfo(weather);
                     } else {
                         // 如果解析没有结果或者响应失败
+                        LogUtil.e("WeatherActivity", "解析失败");
                         Toast.makeText(WeatherActivity.this, "获取天气信息失败", Toast.LENGTH_SHORT).show();
                     }
+                    weatherBinding.swipeRefresh.setRefreshing(false);
                 });
             }
         });
@@ -144,6 +167,7 @@ public class WeatherActivity extends AppCompatActivity {
         weatherBinding.suggestion.sportText.setText("运动建议：" + weather.suggestion.sport.info);
 
         weatherBinding.weatherLayout.setVisibility(View.VISIBLE);
+        weatherBinding.loadFailed.setVisibility(View.INVISIBLE);
     }
 
     private void loadBingPic() {
@@ -151,7 +175,7 @@ public class WeatherActivity extends AppCompatActivity {
         HttpUtil.sendRequestWithOkHttp(requestBingPic, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                Toast.makeText(WeatherActivity.this, "背景图片加载失败，请检查是否连接网络！", Toast.LENGTH_SHORT).show();
+                LogUtil.e("WeatherActivity", "图片加载失败，错误原因：" + e.toString());
             }
 
             @Override

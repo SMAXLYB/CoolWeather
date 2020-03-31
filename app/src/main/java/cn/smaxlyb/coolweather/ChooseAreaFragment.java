@@ -2,6 +2,7 @@ package cn.smaxlyb.coolweather;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.telephony.CellIdentityTdscdma;
 import android.view.LayoutInflater;
@@ -93,10 +94,18 @@ public class ChooseAreaFragment extends Fragment {
                 queryCounties();
             } else if (currentLevel == LEVEL_COUNTY) {
                 String weatherId = countyList.get(position).getWeatherId();
-                Intent intent = new Intent(getActivity(), WeatherActivity.class);
-                intent.putExtra("weather_id", weatherId);
-                startActivity(intent);
-                getActivity().finish();
+                if(getActivity() instanceof MainActivity){
+                    Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                    intent.putExtra("weather_id", weatherId);
+                    startActivity(intent);
+                    getActivity().finish();
+                }else if(getActivity() instanceof WeatherActivity){
+                    WeatherActivity weatherActivity = (WeatherActivity) getActivity();
+                    weatherActivity.weatherBinding.drawerLayout.closeDrawers();
+                    weatherActivity.weatherBinding.swipeRefresh.setRefreshing(true);
+                    weatherActivity.weatherId = weatherId;
+                    weatherActivity.requestWeather(weatherId);
+                }
             }
         });
         // 按钮单击事件

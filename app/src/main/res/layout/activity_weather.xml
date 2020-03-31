@@ -4,44 +4,74 @@
     android:layout_height="match_parent"
     android:background="@color/colorPrimary">
 
+    <TextView
+        android:id="@+id/load_failed"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="加载失败，请检查网络是否连接！"
+        android:textColor="#fff"
+        android:textSize="18sp"
+        android:visibility="invisible" />
+
     <ImageView
         android:id="@+id/bing_pic_img"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="centerCrop"/>
+        android:scaleType="centerCrop" />
 
-    <ScrollView
-        android:id="@+id/weather_layout"
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:overScrollMode="never"
-        android:scrollbars="none">
+        android:layout_height="match_parent">
 
-        <LinearLayout
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:fitsSystemWindows="true">
+            android:layout_height="match_parent">
 
-            <include
-                android:id="@+id/title"
-                layout="@layout/title" />
+            <ScrollView
+                android:id="@+id/weather_layout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:overScrollMode="never"
+                android:scrollbars="none">
 
-            <include
-                android:id="@+id/now"
-                layout="@layout/now" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fitsSystemWindows="true"
+                    android:orientation="vertical">
 
-            <include
-                android:id="@+id/forecast"
-                layout="@layout/forecast" />
+                    <include
+                        android:id="@+id/title"
+                        layout="@layout/title" />
 
-            <include
-                android:id="@+id/aqi"
-                layout="@layout/aqi" />
+                    <include
+                        android:id="@+id/now"
+                        layout="@layout/now" />
 
-            <include
-                android:id="@+id/suggestion"
-                layout="@layout/suggestion" />
-        </LinearLayout>
-    </ScrollView>
+                    <include
+                        android:id="@+id/forecast"
+                        layout="@layout/forecast" />
+
+                    <include
+                        android:id="@+id/aqi"
+                        layout="@layout/aqi" />
+
+                    <include
+                        android:id="@+id/suggestion"
+                        layout="@layout/suggestion" />
+                </LinearLayout>
+            </ScrollView>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        
+        <fragment
+            android:id="@+id/choose_area_fragment"
+            android:name="cn.smaxlyb.coolweather.ChooseAreaFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="left" />
+
+    </androidx.drawerlayout.widget.DrawerLayout>
 </FrameLayout>
